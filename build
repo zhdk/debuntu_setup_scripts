@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 File.open("bin/debuntu_fun.sh","w") do |fun_file|
-  Dir.glob("src/**/*sh").sort.each do |source_file|
+  Dir.glob("src/**/*.sh").sort.each do |source_file|
     function_name = source_file.gsub(/^src\//,'').gsub(/\.sh$/,'').gsub(/\//,'_').gsub(/^/,"debuntu_")
     fun_file.write "function #{function_name} {\n"
     fun_file.write File.read(source_file)
