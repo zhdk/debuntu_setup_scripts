@@ -1,0 +1,66 @@
+Debuntu Setup Scripts
+=====================
+
+As collection of shell-functions to install and setup things in your
+Debian/Ubuntu box.
+
+Properties
+----------
+
+-   All functions are collected conveniently in one file:
+    `/bin/debuntu_fun.sh`.
+
+-   Sourcing this file will have no side effects besides defining
+    functions. 
+
+-   There is no dependency on any tool or platform to run a function. No
+    ruby, python, or whatever is required.
+
+-   Every function is "namespaced" under `debuntu_...`.
+
+-   Every function is indempotent, i.e. calling a function once, twice,
+    or more shall have the same result.
+
+-   Applying a function can be destructive! E.g. `torquebox_install_...`
+    will stop the current instance, possibly remove the installed
+    version (including all deployed applications!), and reinstall
+    torquebox from scratch.
+
+Usage examples
+--------------
+
+Source the functions:
+
+    source <(curl https://raw.github.com/DrTom/debuntu_setup_scripts/master/bin/debuntu_fun.sh)
+
+See which scripts are available:
+
+    declare -F | grep debuntu
+
+Have a closer look at one of them:
+
+    declare -f debuntu_system_setup_vim
+
+    > debuntu_system_setup_vim ()
+    > {
+    >     apt-get install --assume-yes vim-nox;
+    >     update-alternatives --set editor /usr/bin/vim.nox
+    > }
+
+Invoke it:
+
+    debuntu_system_setup_vim
+
+
+Extending and Contributing
+--------------------------
+
+-   `bin/debuntu_fun.sh` is generated from the scripts (not functions!)
+    located in `src`.
+
+-   Invoking `build` will perform the generation. 
+
+-   `build` requires an installed ruby interpreter but it is very simple.
+    Any ruby version will do!
+
+-
