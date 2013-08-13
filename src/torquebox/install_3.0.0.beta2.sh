@@ -2,12 +2,11 @@ stop torquebox
 killall torquebox
 killall -9 torquebox
 
-debuntu_jvm_install_jdk
+debuntu_jvm_open_jdk_install
 
 TB_URL="http://d2t70pdxfgqbmq.cloudfront.net/release/org/torquebox/torquebox-dist/3.0.0.beta2/torquebox-dist-3.0.0.beta2-bin.zip"
 TB_VERSION="3.0.0.beta2"
 TB_ROOT="/opt/torquebox-3.0.0.beta2"
-
 
 TMP_FILE="/tmp/torquebox-${TB_VERSION}.zip"
 TB_LINK="/opt/torquebox"
