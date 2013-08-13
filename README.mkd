@@ -52,7 +52,15 @@ Invoke it:
     debuntu_system_setup_vim
 
 
-Extending and Contributing
+You can invoke a function as some other user: 
+
+    debuntu_invoke_as_user thomas  debuntu_ruby_rbenv_install_jruby_1.7.4
+
+The originating user must have permissions to substitute the user identity via
+`su`. The target user should have set `bash` as his default login shell. 
+
+
+Extending and contributing
 --------------------------
 
 -   `bin/debuntu_fun.sh` is generated from the scripts (not functions!)

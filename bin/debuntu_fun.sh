@@ -13,73 +13,88 @@ apt-get install --assume-yes  postgresql postgresql-client libpq-dev postgresql-
 /etc/init.d/postgresql restart
 }
 
-function debuntu_jvm_install_jdk {
+function debuntu_invoke_as_user {
+TEMPFILE=`mktemp /tmp/debuntu_fun_XXXXXX`
+chmod a+rx $TEMPFILE
+debuntu_meta_write_functions_for_sourcing $TEMPFILE
+cat <<HEREDOC0 | su -l $1
+source $TEMPFILE
+$2 '$3' '$4' 
+HEREDOC0
+rm -f $TEMPFILE
+}
+
+function debuntu_jvm_leiningen_install {
+mkdir -p ~/bin
+curl -s "https://raw.github.com/technomancy/leiningen/stable/bin/lein" > ~/bin/lein
+chmod a+x ~/bin/lein
+~/bin/lein
+}
+
+function debuntu_jvm_open_jdk_install {
 apt-get install --asume-yes openjdk-7-jre-headless openjdk-7-jdk visualvm
 }
 
-function debuntu_jvm_install_leiningen_for_user {
-USER=$1
-read -r -d '' INSTALL_CMD <<HEREDOC0
-mkdir -p ~/bin;
-curl https://raw.github.com/technomancy/leiningen/stable/bin/lein > ~/bin/lein;
-chmod a+x ~/bin/lein;
-HEREDOC0
-echo $INSTALL_CMD | su -l $USER 
+function debuntu_meta_echo_test {
+echo "I am `whoami`"
+echo "ARG1 $1"
+echo "ARG2 $2"
 }
 
-function debuntu_ruby_install_rbenv_for_user {
-USER=$1
-read -r -d '' INSTALL_CMD <<HEREDOC0
-curl https://raw.github.com/fesplugas/rbenv-installer/master/bin/rbenv-installer | bash;
-HEREDOC0
-echo "$INSTALL_CMD" | su -l $USER 
+function debuntu_meta_write_functions_for_sourcing {
+FUNLIST=`declare -F | grep -e "^declare -f debuntu" | cut -f3 -d ' '`
+FUNCTIONS=`declare -f $FUNLIST`
+echo "$FUNCTIONS" > "$1"
 }
 
-function debuntu_ruby_install_ruby_1.9.3_for_user {
-USER=$1
-read -r -d '' INSTALL_CMD <<HEREDOC0
+function debuntu_ruby_rbenv_install {
+curl https://raw.github.com/fesplugas/rbenv-installer/master/bin/rbenv-installer | bash
+}
+
+function debuntu_ruby_rbenv_install_jruby_1.7.4 {
+RUBY='jruby-1.7.4'
+debuntu_ruby_rbenv_install_ruby "$RUBY" "$LINK"
+}
+
+function debuntu_ruby_rbenv_install_ruby {
+RUBY=$1
+
 load_rbenv;
-rbenv install 1.9.3-p448;
-rm ~/.rbenv/versions/ruby-1.9.3;
-ln -s  ~/.rbenv/versions/1.9.3-p448/ ~/.rbenv/versions/ruby-1.9.3;
-rbenv shell ruby-1.9.3;
+rbenv install -f $RUBY;
+rbenv shell $RUBY;
 rbenv rehash;
 gem update --system;
 gem install rubygems-update;
-rbenv rehash;
 update_rubygems;
 gem install bundler;
 rbenv rehash;
-HEREDOC0
-echo "$INSTALL_CMD" | su -l $USER 
+
+if [ -n "$2" ]; then 
+  LINK=$2
+  rm -f ~/.rbenv/versions/$LINK;
+  ln -s  ~/.rbenv/versions/$RUBY/ ~/.rbenv/versions/$LINK;
+fi
 }
 
-function debuntu_ruby_install_ruby_2.0.0_for_user {
-USER=$1
-read -r -d '' INSTALL_CMD <<HEREDOC0
-load_rbenv;
-rbenv install 2.0.0-p247;
-rm ~/.rbenv/versions/ruby-2.0.0;
-ln -s  ~/.rbenv/versions/2.0.0-p247/ ~/.rbenv/versions/ruby-2.0.0;
-rbenv shell 2.0.0-p247;
-rbenv rehash;
-gem update --system;
-gem install rubygems-update;
-rbenv rehash;
-update_rubygems;
-gem install bundler;
-rbenv rehash;
-HEREDOC0
-echo "$INSTALL_CMD" | su -l $USER 
+function debuntu_ruby_rbenv_install_ruby_1.9.3 {
+RUBY='1.9.3-p448'
+LINK='ruby-1.9.3'
+debuntu_ruby_rbenv_install_ruby "$RUBY" "$LINK"
 }
 
-function debuntu_ruby_install_system_dependencies {
+function debuntu_ruby_rbenv_install_ruby_2.0.0 {
+RUBY='2.0.0-p247'
+LINK='ruby-2.0.0'
+debuntu_ruby_rbenv_install_ruby "$RUBY" "$LINK"
+}
+
+function debuntu_ruby_rbenv_install_system_dependencies {
 apt-get install --assume-yes git zlib1g-dev \
   libssl-dev libxslt1-dev libxml2-dev build-essential \
   libreadline-dev libreadline6 libreadline6-dev g++
 }
 
-function debuntu_ruby_setup_rbenv_loader {
+function debuntu_ruby_rbenv_setup_loader_function {
 cat <<'HEREDOC0' > /etc/profile.d/rbenv.sh
 function load_rbenv {
 export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
@@ -89,6 +104,31 @@ function unload_rbenv(){
 export PATH=`ruby -e "puts ENV['PATH'].split(':').reject{|s| s.match(/\.rbenv/)}.join(':')"`
 }
 HEREDOC0
+}
+
+function debuntu_ssh_add_to_authorized_keys {
+KEY=$1
+echo "adding $KEY"
+TMPFILE=`mktemp /tmp/debuntu_XXXXX`
+if [ ! -d ~/.ssh ]; then
+  mkdir -p ~/.ssh
+  chmod go-rwx ~/.ssh
+fi
+if [ ! -f ~/.ssh/authorized_keys ]; then
+  touch ~/.ssh/authorized_keys
+  chmod go-rwx ~/.ssh/authorized_keys
+fi
+echo "$KEY" >> ~/.ssh/authorized_keys;
+cat ~/.ssh/authorized_keys | sort | uniq > "$TMPFILE"
+cat $TMPFILE > ~/.ssh/authorized_keys
+echo "the content of ~/.ssh/authorized_keys is now:" 
+echo "=============================================" 
+cat ~/.ssh/authorized_keys
+}
+
+function debuntu_ssh_download_and_add_to_authorized_keys {
+KEY="$(curl $1)"
+debuntu_ssh_add_to_authorized_keys "$KEY"
 }
 
 function debuntu_ssh_download_and_add_to_authorized_keys_for_user {
@@ -143,6 +183,38 @@ HEREDOC0
 function debuntu_system_setup_vim {
 apt-get install --assume-yes vim-nox
 update-alternatives --set editor /usr/bin/vim.nox
+}
+
+function debuntu_torquebox_install_3-0-0-beta2 {
+stop torquebox
+killall torquebox
+killall -9 torquebox
+
+debuntu_jvm_install_jdk
+
+TB_URL="http://d2t70pdxfgqbmq.cloudfront.net/release/org/torquebox/torquebox-dist/3.0.0.beta2/torquebox-dist-3.0.0.beta2-bin.zip"
+TB_VERSION="3.0.0.beta2"
+TB_ROOT="/opt/torquebox-3.0.0.beta2"
+
+
+TMP_FILE="/tmp/torquebox-${TB_VERSION}.zip"
+TB_LINK="/opt/torquebox"
+
+adduser --disabled-password -gecos "" torquebox
+if [ ! -f ${TMP_FILE} ]; then
+  curl "$TB_URL" > "$TMP_FILE"
+fi
+rm -rf ${TB_ROOT}
+unzip "$TMP_FILE" -d /opt
+chown -R torquebox "${TB_ROOT}"
+rm -f ${TB_LINK}
+ln -s ${TB_ROOT} ${TB_LINK}
+
+debuntu_torquebox_setup_env_loader
+debuntu_torquebox_setup_logrotate
+debuntu_torquebox_setup_upstart
+
+start torquebox
 }
 
 function debuntu_torquebox_install_3.0.0.beta2 {
