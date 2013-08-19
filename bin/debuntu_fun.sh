@@ -20,6 +20,38 @@ cd
 rm -rf $TMPDIR
 }
 
+function debuntu_ci_tightvnc_install {
+apt-get install --assume-yes git x11vnc fluxbox tightvncserver
+}
+
+function debuntu_ci_tightvnc_user_setup {
+# 
+# example for starting and killing a display serer:
+# export DISPLAY_NUMBER=5900
+# tightvncserver :$DISPLAY_NUMBER -geometry 1024x768 -rfbport $DISPLAY_NUMBER -interface 0.0.0.0
+# tightvncserver -kill :$DISPLAY_NUMBER -clean
+
+rm -rf ~/.vnc
+mkdir ~/.vnc
+echo "$USER" | tightvncpasswd -f > ~/.vnc/passwd
+chmod go-rw ~/.vnc/passwd
+
+cat <<'EOF' > ~/.vnc/xstartup
+#!/bin/sh
+xrdb $HOME/.Xresources
+xsetroot -solid grey
+#x-terminal-emulator -geometry 80x24+10+10 -ls -title "$VNCDESKTOP Desktop" &
+#x-window-manager &
+# Fix to make GNOME work
+fluxbox &
+export XKL_XMODMAP_DISABLE=1
+/etc/X11/Xsession
+EOF
+chmod a+x ~/.vnc/xstartup
+
+
+}
+
 function debuntu_database_postgresql_add_pgdg_apt_repository {
 #!/bin/sh
 
