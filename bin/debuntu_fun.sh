@@ -272,15 +272,67 @@ fi
 }
 
 function debuntu_ruby_rbenv_install_ruby_1.9.3 {
-RUBY='1.9.3-p448'
+# $1 == KEEP ; do not force to reinstall from scratch
+# $2 == REMOVE-PREVIOUS ; remove all previous patch versions
+
+CURRENT='1.9.3-p448'
 LINK='ruby-1.9.3'
-debuntu_ruby_rbenv_install_ruby "$RUBY" "$LINK"
+declare -a OLD_VERSIONS=("1.9.3-p0" "1.9.3-p125" "1.9.3-p194"  \
+    "1.9.3-p286" "1.9.3-p327" "1.9.3-p362" "1.9.3-p374" "1.9.3-p385" \
+    "1.9.3-p392" "1.9.3-p429")
+
+VESIONS_DIR="${HOME}"/.rbenv/versions
+
+echo $1
+echo $2
+
+if [ "$1" == "KEEP" ]; then
+  echo "trying to keep existing"
+  if [ ! -d "$VERSIONS"/"$CURRENT" ]; then
+    echo "installing" 
+    # debuntu_ruby_rbenv_install_ruby "$CURRENT" "$LINK"
+  fi
+else
+  rm -rf "$VERSIONS"/"$CURRENT"
+  debuntu_ruby_rbenv_install_ruby "$CURRENT" "$LINK"
+fi
+
+if [ "$2" == "REMOVE-PREVIOUS" ]; then
+  for V in ${OLD_VERSIONS[@]}; do
+    removing $V
+    # rm -rf  "$VERSIONS"/"${V}"
+  done 
+fi 
+
 }
 
 function debuntu_ruby_rbenv_install_ruby_2.0.0 {
-RUBY='2.0.0-p247'
+#!/bin/bash
+
+# $1 == KEEP ; do not force to reinstall from scratch
+# $2 == REMOVE-PREVIOUS ; remove all previous patch versions
+
+CURRENT='2.0.0-p247'
 LINK='ruby-2.0.0'
-debuntu_ruby_rbenv_install_ruby "$RUBY" "$LINK"
+declare -a OLD_VERSIONS=("2.0.0-p0" "2.0.0-p195")
+
+VESIONS_DIR="${HOME}"/.rbenv/versions
+
+if [ "$2" == "REMOVE-PREVIOUS" ]; then
+  for V in ${OLD_VERSIONS[@]}; do
+    removing $V
+    rm -rf  "$VERSIONS"/"${V}"
+  done 
+fi 
+
+if [ "$1" == "KEEP" ]; then
+  if [ ! -d "$VERSIONS"/"$CURRENT" ]; then
+    debuntu_ruby_rbenv_install_ruby "$CURRENT" "$LINK"
+  fi
+else
+  rm -rf "$VERSIONS"/"$CURRENT"
+  debuntu_ruby_rbenv_install_ruby "$CURRENT" "$LINK"
+fi
 }
 
 function debuntu_ruby_rbenv_install_system_dependencies {
@@ -480,5 +532,15 @@ killall torquebox
 killall -9 torquebox
 rm -rf /opt/torquebox*
 rm -f /etc/init/torquebox.conf
+}
+
+function debuntu_zhdk_ci_ruby_setup_ragel_lexer {
+VERSION=$1
+rbenv shell $VERSION 
+gem install gherkin -v 2.12.0
+cd ~/.rbenv/versions/$VERSION/lib/ruby/gems/1.9.1/gems/gherkin-2.12.0/ 
+bundle install
+rbenv rehash
+bundle exec rake compile:gherkin_lexer_en
 }
 
