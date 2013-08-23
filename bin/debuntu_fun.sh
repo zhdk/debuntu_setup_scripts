@@ -415,6 +415,20 @@ vim -c "%s/\v^(#+\s+)(deb.*-backports)/\2/g" -c "wq" "/etc/apt/sources.list"
 apt-get update
 }
 
+function debuntu_system_etckeeper_setup {
+apt-get install etckeeper
+cat <<'EOF' > "/etc/etckeeper/etckeeper.conf"
+VCS="git"
+HIGHLEVEL_PACKAGE_MANAGER=apt
+LOWLEVEL_PACKAGE_MANAGER=dpkg
+EOF
+if [! -d "/etc/.git" ]; then 
+  etckeeper uninit -f
+  etckeeper init
+  etckeeper commit "initial commit" 
+fi 
+}
+
 function debuntu_system_install_basics {
 apt-get install --assume-yes curl git openssh-server unzip zip
 }
