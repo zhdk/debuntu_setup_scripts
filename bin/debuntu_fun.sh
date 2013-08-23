@@ -410,6 +410,11 @@ apg-get update
 apt-get dist-upgrade --assume-yes
 }
 
+function debuntu_system_enable_backports {
+vim -c "%s/\v^(#+\s+)(deb.*-backports)/\2/g" -c "wq" "/etc/apt/sources.list"
+apt-get update
+}
+
 function debuntu_system_install_basics {
 apt-get install --assume-yes curl git openssh-server unzip zip
 }
