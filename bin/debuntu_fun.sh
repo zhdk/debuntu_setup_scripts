@@ -9,6 +9,16 @@ cd
 rm -rf $TMDIR
 }
 
+function debuntu_ci_domina-ci-executor_install {
+VERSION=$1
+TARGET_DIR="${HOME}/domina_ci_executor"
+git clone https://github.com/DrTom/domina-ci-executor.git $TARGET_DIR \
+&& cd "$TARGET_DIR" \
+&& if [ -n $VERSION ]; then
+  git checkout $VERSION
+fi
+}
+
 function debuntu_ci_phantomjs_install {
 mkdir ~/bin
 MACHINE=`uname -m`
@@ -21,6 +31,7 @@ rm -rf $TMPDIR
 }
 
 function debuntu_ci_tightvnc_install {
+echo "INSTALLING tightvncserver"
 apt-get install --assume-yes git x11vnc fluxbox tightvncserver
 }
 
@@ -188,19 +199,19 @@ EOF
 }
 
 function debuntu_database_postgresql_add_superuser {
+echo "ADDING SUPERUSER $1 TO POSTGRES"
 PG_USER=$1
 if [ -n $2 ]; then
   PG_PW="$2"
 else
   PG_PW="$1"
 fi
-read -r -d '' PG_CMD <<HEREDOC0
+cat << HEREDOC0 | su -l postgres -c psql
 CREATE USER $PG_USER superuser createdb login;
 ALTER USER $PG_USER WITH PASSWORD '$PG_PW';
 CREATE DATABASE $PG_USER ;
 GRANT ALL ON DATABASE $PG_USER TO $PG_USER;
 HEREDOC0
-echo $PG_CMD | su -l postgres -c psql
 }
 
 function debuntu_database_postgresql_install_9.2 {
@@ -254,6 +265,7 @@ debuntu_ruby_rbenv_install_ruby "$RUBY" "$LINK"
 function debuntu_ruby_rbenv_install_ruby {
 RUBY=$1
 
+source /etc/profile.d/rbenv.sh
 load_rbenv;
 rbenv install -f $RUBY;
 rbenv shell $RUBY;
@@ -572,14 +584,115 @@ rm -rf /opt/torquebox*
 rm -f /etc/init/torquebox.conf
 }
 
-function debuntu_zhdk_ci_ruby_setup_ragel_lexer {
-VERSION=$1
-load_rbenv
-rbenv shell $VERSION 
-gem install gherkin -v 2.12.0
-cd ~/.rbenv/versions/$VERSION/lib/ruby/gems/1.9.1/gems/gherkin-2.12.0/ 
-bundle install
-rbenv rehash
-bundle exec rake compile:gherkin_lexer_en
+function debuntu_zhdk_ci_ruby_gherkin_setup_ragel_lexer {
+RBENV_RUBY_VERSION=${1:-"ruby-2.0.0"}
+GEMS_VERSION=${2:-"2.0.0"}
+GHERKIN_VERSION=${3:-"2.12.0"}
+SDIR=$(pwd)
+echo Setting up ragle for $RBENV_RUBY_VERSION $GEMS_VERSION $GHERKIN_VERSION
+load_rbenv \
+&& rbenv shell $RBENV_RUBY_VERSION \
+&& gem install gherkin -v ${GHERKIN_VERSION} \
+&& cd ~/.rbenv/versions/$RBENV_RUBY_VERSION/lib/ruby/gems/${GEMS_VERSION}/gems/gherkin-${GHERKIN_VERSION}/  \
+&& bundle install \
+&& rbenv rehash \
+&& bundle exec rake compile:gherkin_lexer_en \
+&& cd "${SDIR}"
+}
+
+function debuntu_zhdk_ci_ruby_install {
+debuntu_ruby_rbenv_install
+debuntu_ruby_rbenv_install_ruby_1.9.3 KEEP REMOVE-PREVIOUS
+debuntu_zhdk_ci_ruby_gherkin_setup_ragel_lexer "ruby-1.9.3" "1.9.1" "2.12.0"
+}
+
+function debuntu_zhdk_complete-setup-as-user {
+debuntu_zhdk_ssh_add-keys
+debuntu_ci_chromedriver_install
+debuntu_zhdk_ci_ruby_install
+debuntu_ci_phantomjs_install
+debuntu_ci_tightvnc_user_setup
+}
+
+function debuntu_zhdk_complete-setup {
+# domina_ci_executor
+debuntu_jvm_open_jdk_install
+adduser --disabled-password -gecos "" domina
+debuntu_zhdk_domina-ci-executor_setup
+
+# pg
+debuntu_database_postgresql_add_pgdg_apt_repository
+debuntu_database_postgresql_install_9.2
+debuntu_database_postgresql_add_superuser domina
+
+debuntu_ci_tightvnc_install
+debuntu_invoke_as_user domina debuntu_zhdk_complete-setup-as-user
+}
+
+function debuntu_zhdk_domina-ci-executor_as-domina-setup {
+debuntu_ci_domina-ci-executor_install "0.4.0"
+
+cat <<'EOF' > ~/domina_ci_executor/domina_conf.clj
+{
+ :shared { :working-dir "/tmp/domina_working_dir"
+           :git-repos-dir "/tmp/domina_git_repos" 
+          }
+
+ :reporter {:max-retries 10
+            :retry-ms-factor 3000}
+
+ :nrepl {:port 7888
+         :bind "0.0.0.0"
+         :enabled true}
+
+ :web {:host "0.0.0.0"
+       :port 8088
+       :ssl-port 8443}
+}
+EOF
+
+debuntu_jvm_leiningen_install
+}
+
+function debuntu_zhdk_domina-ci-executor_setup {
+stop domina
+MATCHER='java.*domina'
+pgrep -f "$MATCHER"
+if [ $? -ne 0 ]; then
+  sleep 10
+  pkill -SIGTERM -f "$MATCHER"
+fi
+pgrep -f "$MATCHER"
+if [ $? -ne 0 ]; then
+  sleep 10
+  pkill -SIGKILL -f "$MATCHER"
+fi
+stop domina
+
+debuntu_invoke_as_user domina debuntu_zhdk_domina-ci-executor_as-domina-setup
+
+cat <<'EOF' > /etc/logrotate.d/domina
+var/log/domina/*.log {
+  daily
+  missingok
+  size 1M
+  rotate 21
+  compress
+  delaycompress
+  notifempty
+  copytruncate
+}
+EOF
+
+cp /home/domina/domina_ci_executor/doc/upstart-domina.conf /etc/init/domina.conf
+start domina
+}
+
+function debuntu_zhdk_ssh_add-keys {
+debuntu_ssh_download_and_add_to_authorized_keys "https://raw.github.com/DrTom/debuntu_setup_scripts/master/data/keys/drtom"
+debuntu_ssh_download_and_add_to_authorized_keys "https://raw.github.com/DrTom/debuntu_setup_scripts/master/data/keys/nimaai"
+debuntu_ssh_download_and_add_to_authorized_keys "https://raw.github.com/DrTom/debuntu_setup_scripts/master/data/keys/psy-q"
+debuntu_ssh_download_and_add_to_authorized_keys "https://raw.github.com/DrTom/debuntu_setup_scripts/master/data/keys/sellittf"
+debuntu_ssh_download_and_add_to_authorized_keys "https://raw.github.com/DrTom/debuntu_setup_scripts/master/data/keys/spape"
 }
 

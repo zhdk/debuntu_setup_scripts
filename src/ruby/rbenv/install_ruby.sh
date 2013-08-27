@@ -1,5 +1,6 @@
 RUBY=$1
 
+source /etc/profile.d/rbenv.sh
 load_rbenv;
 rbenv install -f $RUBY;
 rbenv shell $RUBY;
