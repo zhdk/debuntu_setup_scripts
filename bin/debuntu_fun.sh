@@ -453,23 +453,40 @@ apt-get install --assume-yes vim-nox
 update-alternatives --set editor /usr/bin/vim.nox
 }
 
-function debuntu_torquebox_install_3.0.0.beta2 {
-stop torquebox
-killall torquebox
-killall -9 torquebox
-
-debuntu_jvm_open_jdk_install
-
-TB_URL="http://d2t70pdxfgqbmq.cloudfront.net/release/org/torquebox/torquebox-dist/3.0.0.beta2/torquebox-dist-3.0.0.beta2-bin.zip"
-TB_VERSION="3.0.0.beta2"
-TB_ROOT="/opt/torquebox-3.0.0.beta2"
+function debuntu_torquebox_install_3.0.0 {
+TB_URL="http://torquebox.org/release/org/torquebox/torquebox-dist/3.0.0/torquebox-dist-3.0.0-bin.zip"
+TB_VERSION="3.0.0"
+TB_ROOT="/opt/torquebox-3.0.0"
 
 TMP_FILE="/tmp/torquebox-${TB_VERSION}.zip"
 TB_LINK="/opt/torquebox"
 
+
+### stopping torquebox
+stop torquebox
+MATCHER='java.*jar.*torquebox'
+pgrep -f "$MATCHER"
+if [ $? -ne 0 ]; then
+  sleep 10
+  pkill -SIGTERM -f "$MATCHER"
+fi
+pgrep -f "$MATCHER"
+if [ $? -ne 0 ]; then
+  sleep 10
+  pkill -SIGKILL -f "$MATCHER"
+fi
+stop torquebox
+
+
+### installing prerequisites
+debuntu_jvm_open_jdk_install
+
+
+### do it 
+
 adduser --disabled-password -gecos "" torquebox
 if [ ! -f ${TMP_FILE} ]; then
-  curl "$TB_URL" > "$TMP_FILE"
+  curl -L "$TB_URL" > "$TMP_FILE"
 fi
 rm -rf ${TB_ROOT}
 unzip "$TMP_FILE" -d /opt
