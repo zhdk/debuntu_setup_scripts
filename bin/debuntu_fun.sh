@@ -2,7 +2,7 @@ function debuntu_ci_chromedriver_install {
 TMDIR=`mktemp -d`
 cd $TMDIR
 MACHINE_BITS=`uname -m | cut -d '_' -f 2`
-curl "https://chromedriver.googlecode.com/files/chromedriver_linux${MACHINE_BITS}_26.0.1383.0.zip" > chromedriver.zip
+curl -s -L "https://chromedriver.googlecode.com/files/chromedriver_linux${MACHINE_BITS}_2.2.zip" > chromedriver.zip
 unzip chromedriver.zip
 mv chromedriver ~/bin
 cd
