@@ -240,7 +240,12 @@ chmod a+x ~/bin/lein
 }
 
 function debuntu_jvm_open_jdk_install {
-apt-get install --assume-yes openjdk-7-jre-headless openjdk-7-jdk visualvm
+apt-get install --assume-yes openjdk-7-jre-headless openjdk-7-jdk
+
+    if [ "$(lsb_release -is)" = "Ubuntu" ]; then
+            apt-get install --assume-yes visualvm
+    fi
+
 }
 
 function debuntu_meta_echo_test {
