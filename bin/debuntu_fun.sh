@@ -222,7 +222,7 @@ apt-get install --assume-yes postgresql-9.2 postgresql-client-9.2 postgresql-con
 }
 
 function debuntu_invoke_as_user {
-TEMPFILE=`mktemp /tmp/debuntu_fun_XXXXXX`
+TEMPFILE=`mktemp /tmp/debuntu-fun-XXXXXX`
 chmod a+rx $TEMPFILE
 debuntu_meta_write_functions_for_sourcing $TEMPFILE
 cat <<HEREDOC0 | su -l $1
@@ -378,7 +378,7 @@ HEREDOC0
 function debuntu_ssh_add_to_authorized_keys {
 KEY=$1
 echo "adding $KEY"
-TMPFILE=`mktemp /tmp/debuntu_XXXXX`
+TMPFILE=`mktemp /tmp/debuntu-XXXXX`
 if [ ! -d ~/.ssh ]; then
   mkdir -p ~/.ssh
   chmod go-rwx ~/.ssh
@@ -652,7 +652,6 @@ adduser --disabled-password -gecos "" domina
 debuntu_zhdk_domina-ci-executor_setup
 
 # pg
-debuntu_database_postgresql_add_pgdg_apt_repository
 debuntu_database_postgresql_install_9.2
 debuntu_database_postgresql_add_superuser domina
 

@@ -4,7 +4,6 @@ adduser --disabled-password -gecos "" domina
 debuntu_zhdk_domina-ci-executor_setup
 
 # pg
-debuntu_database_postgresql_add_pgdg_apt_repository
 debuntu_database_postgresql_install_9.2
 debuntu_database_postgresql_add_superuser domina
 

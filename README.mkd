@@ -64,6 +64,23 @@ The originating user must have permissions to substitute the user identity via
 `su`. The target user should have set `bash` as his default login shell. 
 
 
+Documentation
+-------------
+
+### Callgraph
+
+The 
+[call-graph](https://rawgithub.com/DrTom/debuntu_setup_scripts/master/doc/call_graph.svg)
+([direct link](doc/call_graph.svg))
+shows an overview of the functions invoking each other. This comes handy to
+prevent errors when functions are renamed, removed, or the signature is
+changed.
+
+The visualization can be rebuild by invoking `./doc/build_call_graph.rb` from
+the top-level directory. It requires `ruby`, some ruby libraries, and
+[Graphwiz](http://www.graphviz.org/).
+
+
 Extending and contributing
 --------------------------
 
@@ -74,5 +91,3 @@ Extending and contributing
 
 -   `build` requires an installed ruby interpreter but it is very simple.
     Any ruby version will do!
-
--

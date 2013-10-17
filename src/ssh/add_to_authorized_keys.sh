@@ -1,6 +1,6 @@
 KEY=$1
 echo "adding $KEY"
-TMPFILE=`mktemp /tmp/debuntu_XXXXX`
+TMPFILE=`mktemp /tmp/debuntu-XXXXX`
 if [ ! -d ~/.ssh ]; then
   mkdir -p ~/.ssh
   chmod go-rwx ~/.ssh
