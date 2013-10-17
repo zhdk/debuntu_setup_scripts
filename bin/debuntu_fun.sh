@@ -65,6 +65,15 @@ chmod a+x ~/.vnc/xstartup
 
 }
 
+# Detect if it's Ubuntu so we know if we have to do any Ubuntu-specific extrawursts
+function debuntu_system_is_ubuntu {
+        if [ "$(lsb_release -is)" = "Ubuntu" ]; then
+                return 0
+        else
+                return 1
+        fi
+}
+
 function debuntu_database_postgresql_add_pgdg_apt_repository {
 #!/bin/sh
 
@@ -242,7 +251,7 @@ chmod a+x ~/bin/lein
 function debuntu_jvm_open_jdk_install {
 apt-get install --assume-yes openjdk-7-jre-headless openjdk-7-jdk
 
-    if [ "$(lsb_release -is)" = "Ubuntu" ]; then
+    if debuntu_system_is_ubuntu; then
             apt-get install --assume-yes visualvm
     fi
 

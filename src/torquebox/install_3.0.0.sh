@@ -7,7 +7,17 @@ TB_LINK="/opt/torquebox"
 
 
 ### stopping torquebox
-stop torquebox
+# Note: Why are we messily killing and waiting here? The init script should
+# reliably stop torquebox, including any sleeps if they are required, or it
+# should not return before the job is done.
+
+if debuntu_system_is_ubuntu; then
+        stop torquebox
+else
+        service torquebox stop
+fi
+
+
 MATCHER='java.*jar.*torquebox'
 pgrep -f "$MATCHER"
 if [ $? -ne 0 ]; then
@@ -19,7 +29,12 @@ if [ $? -ne 0 ]; then
   sleep 10
   pkill -SIGKILL -f "$MATCHER"
 fi
-stop torquebox
+
+if debuntu_system_is_ubuntu; then
+        stop torquebox
+else
+        service torquebox stop
+fi
 
 
 ### installing prerequisites
@@ -42,4 +57,9 @@ debuntu_torquebox_setup_env_loader
 debuntu_torquebox_setup_logrotate
 debuntu_torquebox_setup_upstart
 
-start torquebox
+
+if debuntu_system_is_ubuntu; then
+        start torquebox
+else
+        service torquebox start
+fi
