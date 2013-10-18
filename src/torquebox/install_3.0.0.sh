@@ -32,8 +32,12 @@ chown -R torquebox "${TB_ROOT}"
 rm -f ${TB_LINK}
 ln -s ${TB_ROOT} ${TB_LINK}
 
+LOGDIR="/var/log/torquebox/"
+mkdir $LOGDIR
+chown -R torquebox $LOGDIR
+
 debuntu_torquebox_setup_env_loader
 debuntu_torquebox_setup_logrotate
-debuntu_torquebox_setup_upstart
+debuntu_torquebox_setup_start_stop_scripts
 
 service torquebox start
