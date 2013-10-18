@@ -240,13 +240,19 @@ chmod a+x ~/bin/lein
 }
 
 function debuntu_jvm_open_jdk_install {
-apt-get install --assume-yes openjdk-7-jre-headless openjdk-7-jdk
-
-# Ugly hack: visualvm is packaged for Debian testing (jessie), not for wheezy, so
-# let's not attempt to install there.
-if debuntu_system_is_ubuntu; then
-        apt-get install --assume-yes visualvm
-fi
+OS_ID=`debuntu_system_meta_os-name`
+echo "Installing open-jdk for \"$OS_ID\""
+case "$OS_ID" in
+  'Ubuntu/precise'|'Debian/jessie')
+    apt-get install --assume-yes openjdk-7-jre-headless openjdk-7-jdk visualvm
+    ;;
+  'Debian/wheezy')
+    apt-get install --assume-yes openjdk-7-jre-headless openjdk-7-jdk 
+    ;;
+  *)
+    echo "none OS matched!!!"
+    ;;
+esac
 }
 
 function debuntu_meta_echo_test {
@@ -465,6 +471,10 @@ function debuntu_system_is_ubuntu {
                 return 1
         fi
 }
+}
+
+function debuntu_system_meta_os-name {
+echo -ne "$(lsb_release -is)/$(lsb_release -cs)"
 }
 
 function debuntu_system_set_us-utf8_locale {
